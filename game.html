@@ -2,6 +2,8 @@
 <html>
 <head>
     <title>FreeFlow</title>
+    <link rel="icon" href="icon.png"/>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -64,51 +66,14 @@
      * */
     function V2d(x, y) {
         var self = this;
-        this.x = x === undefined ? 0 : x;
-        this.y = y === undefined ? 0 : y;
+        self.x = x === undefined ? 0 : x;
+        self.y = y === undefined ? 0 : y;
 
-        this.assign_self = function (other) {
-            self.x = other.x;
-            self.y = other.y;
-        };
-
-        this.add = function (other) {
-            return new V2d(self.x + other.x, self.y + other.y);
-        };
-
-        this.add_self = function (other) {
-            self.x = self.x + other.x;
-            self.y = self.y + other.y;
-        };
-
-        this.sub = function (other) {
-            return new V2d(self.x - other.x, self.y - other.y);
-        };
-
-        this.sub_self = function (other) {
-            self.x = self.x - other.x;
-            self.y = self.y - other.y;
-        };
-
-        this.mul = function (scalar) {
-            return new V2d(self.x * scalar, self.y * scalar);
-        };
-
-        this.mul_self = function (scalar) {
-            self.x = self.x * scalar;
-            self.y = self.y * scalar;
-        };
-
-        this.div = function (scalar) {
+        self.div = function (scalar) {
             return new V2d(self.x / scalar, self.y / scalar);
         };
 
-        this.div_self = function (scalar) {
-            self.x = self.x / scalar;
-            self.y = self.y / scalar;
-        };
-
-        this.floor = function () {
+        self.floor = function () {
             self.x = Math.floor(self.x);
             self.y = Math.floor(self.y);
         }
@@ -152,10 +117,18 @@
             // Keeps track of it
             self.$obj = $(container).find('#' + String(index_i) + "-" + String(index_j) + "-cell");
 
-            // Modifiers
+            /* Graphics -------------------------------------- */
             self.set_bg = function (_color) {
                 self.$obj.css({
-                    "background-color": _color
+                    'background-color': _color
+                });
+            };
+
+            self.apply_flow_end_graphics = function (_color) {
+                // Cannot change bg color
+                self.$obj.css({
+                    'background-color': _color,
+                    'border': '3px dashed white'
                 });
             };
         };
@@ -182,14 +155,99 @@
             self.end_point1 = parent_matrix.get_cell(pos1);
             self.end_point2 = parent_matrix.get_cell(pos2);
 
-            // Colors flow ends
-            self.end_point1.set_bg(color);
-            self.end_point2.set_bg(color);
+            // Apply flow end graphics
+            self.end_point1.apply_flow_end_graphics(color);
+            self.end_point2.apply_flow_end_graphics(color);
 
+            /* Path ----------------------------------------------- */
             // Keeps track of drawn flow path
             self.path = [];
 
+            self.start = undefined;
+
+            self.on_complete_callback = function () {
+                // Update globals like score etc ...
+                Materialize.toast("Flow completed", 2000);
+            };
+
+            self.reset_flow = function () {
+                // Undo all the graphic changes
+                var path_len = self.path.length;
+                // Notice the > 0, i.e. we are undoing the graphical effects until we reach flow end point
+                // We are not touching graphics of flow end point because it's graphic were not changed
+                //                                                          when it was pushed into path array
+                for (var i = path_len - 1; i > 0; --i) {
+                    var last_cell = parent_matrix.get_cell(self.path[i]);
+                    // Undo graphics
+                    last_cell.set_bg('#ffffff');
+                }
+                // Release the memory;
+                self.path = [];
+                // Reset the start of path
+                self.start = undefined;
+            };
+
+            self.initialize_flow = function (co_ordinates) {
+                // Pushes the selected point's coordinates into the path
+                // Notice that we are not changing the end point graphically
+                self.path.push(co_ordinates);
+                self.start = co_ordinates;
+            };
+
+            self.push_into_flow = function (new_coordinates) {
+                var new_cell = parent_matrix.get_cell(new_coordinates);
+                var new_cell_bg = new_cell.$obj.css('background-color');
+                // If new coordinates does not have a colored cell already
+                // Put a new cell there
+                if (new_cell_bg === 'rgb(255, 255, 255)') {
+                    // Graphic changes
+                    // Colors new cell
+                    new_cell.set_bg(self.color);
+                    // Adds new cell coordinates in the path
+                    self.path.push(new_cell.co_ordiantes);
+                }
+                // Reached it's destination
+                else if (
+                    new_cell_bg === self.color
+                    &&
+                    (self.start.x !== new_coordinates.x || self.start.x !== new_coordinates.x)) {
+                    // This flow becomes inactive
+                    parent_matrix.active_flow_index = -1;
+                    self.on_complete_callback();
+                }
+            };
+
+            self.pop_from_flow = function () {
+                if (self.path.length > 0) {
+                    var last_cell = parent_matrix.get_cell(self.path[self.path.length - 1]);
+                    // Undo all the graphic changes
+                    last_cell.set_bg('#ffffff');
+                    // Release the memory of last_cell's coordinates
+                    self.path.pop();
+                }
+            };
+
             // Movements
+            // Push or Pop or None
+            self.move = function (new_coordinates) {
+                // Either removing a cell
+                // Or Adding a Cell
+                if (self.path.length > 1) {
+                    var pen_ultimate_cell_coordinates = self.path[self.path.length - 2];
+                    if (new_coordinates.x === pen_ultimate_cell_coordinates.x &&
+                        new_coordinates.y === pen_ultimate_cell_coordinates.y) {
+                        // User went back
+                        self.pop_from_flow();
+                    }
+                    else {
+                        self.push_into_flow(new_coordinates);
+                    }
+                }
+                else {
+                    self.push_into_flow(new_coordinates);
+                }
+            };
+
             self.left = function () {
                 if (self.path.length === 0) {
                     alert("Select a flow to build");
@@ -206,11 +264,8 @@
                             x: latest_point.x - 1,
                             y: latest_point.y
                         };
-                        var new_cell = parent_matrix.get_cell(new_coordinates);
-                        // Colors new cell
-                        new_cell.set_bg(self.color);
-                        // Adds new cell in the path
-                        self.path.push(new_cell.co_ordiantes);
+                        // Move to new coordinates
+                        self.move(new_coordinates);
                     }
                 }
             };
@@ -231,11 +286,8 @@
                             x: latest_point.x + 1,
                             y: latest_point.y
                         };
-                        var new_cell = parent_matrix.get_cell(new_coordinates);
-                        // Colors new cell
-                        new_cell.set_bg(self.color);
-                        // Adds new cell in the path
-                        self.path.push(new_cell.co_ordiantes);
+                        // Move to new coordinates
+                        self.move(new_coordinates);
                     }
                 }
             };
@@ -256,11 +308,8 @@
                             x: latest_point.x,
                             y: latest_point.y - 1
                         };
-                        var new_cell = parent_matrix.get_cell(new_coordinates);
-                        // Colors new cell
-                        new_cell.set_bg(self.color);
-                        // Adds new cell in the path
-                        self.path.push(new_cell.co_ordiantes);
+                        // Move to new coordinates
+                        self.move(new_coordinates);
                     }
                 }
             };
@@ -281,16 +330,13 @@
                             x: latest_point.x,
                             y: latest_point.y + 1
                         };
-                        var new_cell = parent_matrix.get_cell(new_coordinates);
-                        // Colors new cell
-                        new_cell.set_bg(self.color);
-                        // Adds new cell in the path
-                        self.path.push(new_cell.co_ordiantes);
+                        // Move to new coordinates
+                        self.move(new_coordinates);
                     }
                 }
             };
-            /* Listeners -------------------------------------------*/
 
+            /* Listeners -------------------------------------------*/
             $(document).ready(function () {
                 $(container)
                     .on(
@@ -299,12 +345,14 @@
                         ',' +
                         '#' + self.end_point2.id,
                         function () {
+                            // Empty the previous flow path if any
+                            if (parent_matrix.active_flow_index !== -1) {
+                                parent_matrix.flows[parent_matrix.active_flow_index].reset_flow();
+                            }
+                            // Update the active flow index
                             parent_matrix.active_flow_index = self.index;
-                            // Clears the previous path if any
-                            self.path = [];
-                            // Pushes the selected point's coordinates into the path
                             var co_ordinates = parent_matrix.get_coordinates($(this).attr('id'));
-                            self.path.push(co_ordinates);
+                            self.initialize_flow(co_ordinates);
                         }
                     )
             });
@@ -528,13 +576,19 @@
         var width_univ = $($universe).width();
         var height_univ = $($universe).height();
         var pos2d = new V2d(width_univ / 2, height_univ / 2);
-        var order = new V2d(30, 30);
+        var order = new V2d(17, 17);
         var cell_size = (Math.min(width_univ, height_univ) / Math.min(order.x, order.y)) * (9 / 10); // min padding
 
         // Initialize
+        // Assert
+        // Unique white color,
+        // unique colors for all flows in rgba format,
+        // distinct end points of flow,
+        // proper values of order,
+        // proper flow end points
         var matrix = new Matrix(order, pos2d, cell_size, $universe);
-        matrix.add_flow({x: 0, y: 0}, {x: 5, y: 5}, "#009866");
-        matrix.add_flow({x: 10, y: 10}, {x: 5, y: 16}, "#ff9866");
+        matrix.add_flow({x: 0, y: 0}, {x: 5, y: 5}, "rgb(0, 128, 128)");
+        matrix.add_flow({x: 10, y: 10}, {x: 5, y: 16}, "rgb(128, 128, 0)");
     });
 
 </script>
