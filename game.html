@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FreeFlow</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+    <style>
+        .cell {
+            background-color: white;
+            outline: 1px solid black;
+        }
+
+        .cell:hover {
+            background-color: whitesmoke;
+        }
+
+        .matrix {
+            outline: 3px solid white;
+        }
+    </style>
+</head>
+
+<body>
+<script type="text/javascript">
+    // Declares References
+    var $universe;
+
+    /**
+     * Builds html strings which can be directly appended to a DOM object
+     * */
+    function _element(tags, attributes, contents, closings) {
+        var $element = "";// returns string
+        var iter;
+        for (iter = 0; iter < tags.length; ++iter) {
+
+            $element += "<" + tags[iter];
+
+            for (var key in attributes[iter]) {
+                if (attributes[iter].hasOwnProperty(key)) {
+                    //# adds an attribute to the tags[i]#
+                    $element += ( " " + key + "=\'" + attributes[iter][key] + "\'");
+                }
+            }
+
+            $element += ">";
+            $element += contents[iter];
+        }
+
+        for (iter = tags.length - 1; iter > -1; --iter) {
+            if (closings[iter]) {
+                $element += "</" + tags[iter] + ">"
+            }
+        }
+
+        return $element;
+    }
+
+    /**
+     * Vector 2d
+     * */
+    function V2d(x, y) {
+        var self = this;
+        this.x = x === undefined ? 0 : x;
+        this.y = y === undefined ? 0 : y;
+
+        this.assign_self = function (other) {
+            self.x = other.x;
+            self.y = other.y;
+        };
+
+        this.add = function (other) {
+            return new V2d(self.x + other.x, self.y + other.y);
+        };
+
+        this.add_self = function (other) {
+            self.x = self.x + other.x;
+            self.y = self.y + other.y;
+        };
+
+        this.sub = function (other) {
+            return new V2d(self.x - other.x, self.y - other.y);
+        };
+
+        this.sub_self = function (other) {
+            self.x = self.x - other.x;
+            self.y = self.y - other.y;
+        };
+
+        this.mul = function (scalar) {
+            return new V2d(self.x * scalar, self.y * scalar);
+        };
+
+        this.mul_self = function (scalar) {
+            self.x = self.x * scalar;
+            self.y = self.y * scalar;
+        };
+
+        this.div = function (scalar) {
+            return new V2d(self.x / scalar, self.y / scalar);
+        };
+
+        this.div_self = function (scalar) {
+            self.x = self.x / scalar;
+            self.y = self.y / scalar;
+        };
+
+        this.floor = function () {
+            self.x = Math.floor(self.x);
+            self.y = Math.floor(self.y);
+        }
+    }
+
+    /**
+     * Matrix Constructor
+     * */
+    function Matrix(order2d, pos2d_px, cell_size_px, container) {
+        var m_self = this;
+
+        /**
+         * Cell Constructor
+         * */
+        m_self.Cell = function (index_i, index_j, left_px, top_px, size_px, container) {
+            var self = this;
+
+            // Basic Info
+            self.co_ordiantes = {x: index_i, y: index_j};
+            // This format is important for parses coordinates from id later
+            self.id = String(index_i) + "-" + String(index_j) + "-cell";
+
+            // Renders Cell
+            var _cell = _element(
+                ["div"],
+                [
+                    {
+                        "id": self.id,
+                        "class": "cell",
+                        "style": "width:" + size_px + "px;" +
+                        "height:" + size_px + "px;" +
+                        "position:absolute;" +
+                        "left:" + left_px + "px;" +
+                        "top:" + top_px + "px;"
+                    }
+                ],
+                [""],
+                [true]
+            );
+            $(container).append(_cell);
+            // Keeps track of it
+            self.$obj = $(container).find('#' + String(index_i) + "-" + String(index_j) + "-cell");
+
+            // Modifiers
+            self.set_bg = function (_color) {
+                self.$obj.css({
+                    "background-color": _color
+                });
+            };
+        };
+
+        /**
+         * Flow Constructor
+         * */
+        m_self.Flow = function (pos1, pos2, color, index) {
+            /*
+             * pos.x = x co-ordinate
+             * pos.y = y co-ordinate
+             * */
+            var parent_matrix = m_self;
+            var self = this;
+
+            // Keeps track of index
+            // this index is the index of the parent's array which keeps track all flows
+            self.index = index;
+
+            // Keeps track of color
+            self.color = color;
+
+            // Keeps track of end points
+            self.end_point1 = parent_matrix.get_cell(pos1);
+            self.end_point2 = parent_matrix.get_cell(pos2);
+
+            // Colors flow ends
+            self.end_point1.set_bg(color);
+            self.end_point2.set_bg(color);
+
+            // Keeps track of drawn flow path
+            self.path = [];
+
+            // Movements
+            self.left = function () {
+                if (self.path.length === 0) {
+                    alert("Select a flow to build");
+                }
+                else {
+                    // length > 0
+                    var latest_point = self.path[self.path.length - 1];
+                    if (latest_point.x === 0) {
+                        // Pass
+                    }
+                    else {
+                        // Go Left i.e. x--
+                        var new_coordinates = {
+                            x: latest_point.x - 1,
+                            y: latest_point.y
+                        };
+                        var new_cell = parent_matrix.get_cell(new_coordinates);
+                        // Colors new cell
+                        new_cell.set_bg(self.color);
+                        // Adds new cell in the path
+                        self.path.push(new_cell.co_ordiantes);
+                    }
+                }
+            };
+
+            self.right = function () {
+                if (self.path.length === 0) {
+                    alert("Select a flow to build");
+                }
+                else {
+                    // length > 0
+                    var latest_point = self.path[self.path.length - 1];
+                    if (latest_point.x === parent_matrix.order2d.x - 1) {
+                        // Pass
+                    }
+                    else {
+                        // Go Right i.e. x++
+                        var new_coordinates = {
+                            x: latest_point.x + 1,
+                            y: latest_point.y
+                        };
+                        var new_cell = parent_matrix.get_cell(new_coordinates);
+                        // Colors new cell
+                        new_cell.set_bg(self.color);
+                        // Adds new cell in the path
+                        self.path.push(new_cell.co_ordiantes);
+                    }
+                }
+            };
+
+            self.up = function () {
+                if (self.path.length === 0) {
+                    alert("Select a flow to build");
+                }
+                else {
+                    // length > 0
+                    var latest_point = self.path[self.path.length - 1];
+                    if (latest_point.y === 0) {
+                        // Pass
+                    }
+                    else {
+                        // Go Up i.e. y--
+                        var new_coordinates = {
+                            x: latest_point.x,
+                            y: latest_point.y - 1
+                        };
+                        var new_cell = parent_matrix.get_cell(new_coordinates);
+                        // Colors new cell
+                        new_cell.set_bg(self.color);
+                        // Adds new cell in the path
+                        self.path.push(new_cell.co_ordiantes);
+                    }
+                }
+            };
+
+            self.down = function () {
+                if (self.path.length === 0) {
+                    alert("Select a flow to build");
+                }
+                else {
+                    // length > 0
+                    var latest_point = self.path[self.path.length - 1];
+                    if (latest_point.y === parent_matrix.order2d.y - 1) {
+                        // Pass
+                    }
+                    else {
+                        // Go Down i.e. y++
+                        var new_coordinates = {
+                            x: latest_point.x,
+                            y: latest_point.y + 1
+                        };
+                        var new_cell = parent_matrix.get_cell(new_coordinates);
+                        // Colors new cell
+                        new_cell.set_bg(self.color);
+                        // Adds new cell in the path
+                        self.path.push(new_cell.co_ordiantes);
+                    }
+                }
+            };
+            /* Listeners -------------------------------------------*/
+
+            $(document).ready(function () {
+                $(container)
+                    .on(
+                        'click',
+                        '#' + self.end_point1.id +
+                        ',' +
+                        '#' + self.end_point2.id,
+                        function () {
+                            parent_matrix.active_flow_index = self.index;
+                            // Clears the previous path if any
+                            self.path = [];
+                            // Pushes the selected point's coordinates into the path
+                            var co_ordinates = parent_matrix.get_coordinates($(this).attr('id'));
+                            self.path.push(co_ordinates);
+                        }
+                    )
+            });
+        };
+
+        // Unique Id
+        m_self.id = "matrix";
+        m_self.order2d = order2d;
+        // Floors params
+        m_self.order2d.floor();
+        pos2d_px.floor();
+        cell_size_px = Math.floor(cell_size_px);
+
+        /* Rendering ------------------------------------------------------------------ */
+
+        // Geometry Calc
+        var width_px = m_self.order2d.x * cell_size_px;
+        var height_px = m_self.order2d.y * cell_size_px;
+        var left_px = pos2d_px.x - width_px / 2;
+        var top_px = pos2d_px.y - height_px / 2;
+
+        // Renders Matrix Base
+        var _matrix = _element(
+            ["div"],
+            [
+                {
+                    "id": m_self.id,
+                    "class": "matrix",
+                    "style": "width:" + width_px + "px;" +
+                    "height:" + height_px + "px;" +
+                    "position:absolute;" +
+                    "left:" + left_px + "px;" +
+                    "top:" + top_px + "px;"
+                }
+            ],
+            [""],
+            [true]
+        );
+        $(container).append(_matrix);
+        // Keeps track of it
+        m_self.$obj = $(container).find("#" + m_self.id);
+
+        /* Cells ----------------------------------------------------------------------- */
+
+        // Keeps track of cells according to cartesian co-ordinate system
+        // (0,0) (1,0) (2,0) (3,0) ....
+        // (0,1) ....
+        // (0,2) ....
+        // (0,3) ....
+        m_self.cells = [];
+
+        // Instantiates Cells
+        var top_px_ij = 0;
+        for (var i = 0; i < m_self.order2d.y; i++) {
+            var left_px_ij = 0;
+            var new_row = [];
+            for (var j = 0; j < m_self.order2d.x; j++) {
+                // Push to array
+                new_row.push(new m_self.Cell(i, j, top_px_ij, left_px_ij, cell_size_px, m_self.$obj));
+                left_px_ij += cell_size_px;
+            }
+            m_self.cells.push(new_row);
+            top_px_ij += cell_size_px;
+        }
+
+        /* Flows --------------------------------------------------------------------------- */
+
+        // Keeps track of flows
+        m_self.flows = [];
+
+        m_self.active_flow_index = -1;
+
+        m_self.add_flow = function (pos1, pos2, color) {
+            m_self.flows.push(new m_self.Flow(pos1, pos2, color, m_self.flows.length));
+        };
+
+        /* Misc functions -------------------------------------------------------------------- */
+
+        // Getters
+        m_self.get_coordinates = function (_id) {
+            /*
+             * id format = (x_co_ordinate)-(y_co_ordinate)-(*)
+             * */
+            var co_ordinates = _id.split("-");
+            return {
+                x: parseInt(co_ordinates[0]),
+                y: parseInt(co_ordinates[1])
+            };
+        };
+
+        m_self.get_cell = function (pos) {
+            /*
+             * pos.x = x co-ordinate
+             * pos.y = y co-ordinate
+             * */
+            return m_self.cells[pos.x][pos.y];
+        };
+
+        // Event Management
+        m_self.is_drawing = false;
+        m_self.drawing_event = function (co_ordinates) {
+            var path_length = m_self.path.length;
+
+            var curr_x = co_ordinates.x;
+            var curr_y = co_ordinates.y;
+
+            if (path_length === 0) {
+                m_self.cells[curr_x][curr_y].set_bg("black");
+                m_self.path.push(co_ordinates);
+            }
+            else {
+                var last_x = m_self.path[path_length - 1].x;
+                var last_y = m_self.path[path_length - 1].y;
+
+                // Is valid
+                // iff
+                // Click is around the last one and
+                // Not contained in path already
+                if ((curr_x === last_x && curr_y === last_y)
+                    || (curr_x === last_x + 1 && curr_y === last_y)
+                    || (curr_x === last_x - 1 && curr_y === last_y)
+                    || (curr_x === last_x && curr_y === last_y + 1)
+                    || (curr_x === last_x && curr_y === last_y - 1)
+                    || (curr_x === last_x + 1 && curr_y === last_y + 1)
+                    || (curr_x === last_x + 1 && curr_y === last_y - 1)
+                    || (curr_x === last_x - 1 && curr_y === last_y + 1)
+                    || (curr_x === last_x - 1 && curr_y === last_y - 1)) {
+                    // Around the last one
+
+                    var last_but_one = m_self.path[path_length - 2];
+
+                    if ((curr_x === last_x && curr_y === last_y)) {
+                        // Last point selected again
+                        m_self.cells[last_x][last_y].set_bg("white");
+                        m_self.path.pop();
+                    }
+                    else if (last_but_one !== undefined) {
+                        if (curr_x === last_but_one.x && curr_y === last_but_one.y) {
+                            // Last but one selected
+                            // Remove the last two points in path
+                            m_self.path.pop();
+                            m_self.path.pop();
+                            //
+                            m_self.cells[last_x][last_y].set_bg("white");
+                            m_self.cells[last_but_one.x][last_but_one.y].set_bg("white");
+                        } else {
+                            // New point selected
+                            m_self.cells[curr_x][curr_y].set_bg("black");
+                            m_self.path.push(co_ordinates);
+                        }
+                    }
+                    else {
+                        // New point selected
+                        m_self.cells[curr_x][curr_y].set_bg("black");
+                        m_self.path.push(co_ordinates);
+                    }
+
+                }
+            }
+        };
+
+        /* Listeners ------------------------------------------------------------------------- */
+
+        // Listeners
+        $(document).on(
+            'keydown',
+            function (e) {
+                switch (e.keyCode) {
+                    // Left arrow
+                    case 37:
+                        if (m_self.active_flow_index === -1) {
+                            Materialize.toast("Select a flow to build", 1000);
+                            return;
+                        }
+                        else {
+                            m_self.flows[m_self.active_flow_index].left();
+                        }
+                        break;
+                    // Up arrow
+                    case 38:
+                        if (m_self.active_flow_index === -1) {
+                            Materialize.toast("Select a flow to build", 1000);
+                            return;
+                        }
+                        else {
+                            m_self.flows[m_self.active_flow_index].up();
+                        }
+                        break;
+                    // Right arrow
+                    case 39:
+                        if (m_self.active_flow_index === -1) {
+                            Materialize.toast("Select a flow to build", 1000);
+                            return;
+                        }
+                        else {
+                            m_self.flows[m_self.active_flow_index].right();
+                        }
+                        break;
+                    // Down arrow
+                    case 40:
+                        if (m_self.active_flow_index === -1) {
+                            Materialize.toast("Select a flow to build", 1000);
+                            return;
+                        }
+                        else {
+                            m_self.flows[m_self.active_flow_index].down();
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        );
+    }
+
+    $(document).ready(function () {
+        // Gets references
+        var $universe = $("#universe");
+
+        // Calc some globals
+        var width_univ = $($universe).width();
+        var height_univ = $($universe).height();
+        var pos2d = new V2d(width_univ / 2, height_univ / 2);
+        var order = new V2d(30, 30);
+        var cell_size = (Math.min(width_univ, height_univ) / Math.min(order.x, order.y)) * (9 / 10); // min padding
+
+        // Initialize
+        var matrix = new Matrix(order, pos2d, cell_size, $universe);
+        matrix.add_flow({x: 0, y: 0}, {x: 5, y: 5}, "#009866");
+        matrix.add_flow({x: 10, y: 10}, {x: 5, y: 16}, "#ff9866");
+    });
+
+</script>
+<div class="">
+    <div id="universe" style="width: 100vw;height: 100vh;position: relative"></div>
+</div>
+</body>
+</html>
