@@ -627,11 +627,39 @@
                 }
             ]
         );
+
+        $.ajax({
+            url: 'levels.php',
+            type: 'POST',
+//            data: {
+//                q: "c",
+//                name: "ben<>df()",
+//                author: "10()<>",
+//                data: "alienf force~'\"()<>"
+//            },
+//            data: {
+//                q: "d",
+//                pk: "100",
+//            },
+//            data: {
+//                q: "u",
+//                pk: "4",
+//                name: "ben",
+//                author: "10",
+//                data: "alien force"
+//            },
+            error: function () {
+              alert('error')
+            },
+            success: function (r) {
+                console.log(r)
+            }
+        })
     });
 
 </script>
 <div class="">
-    <div id="universe" class="teal" style="width: 100vw;height: 100vh;"></div>
+    <div id="universe" class="grey lighten-2" style="width: 100vw;height: 100vh;"></div>
 </div>
 </body>
 </html>
