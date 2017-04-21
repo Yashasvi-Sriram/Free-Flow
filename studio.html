@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FreeFlow</title>
+    <link rel="icon" href="icon.png"/>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+    <style>
+        .cell {
+            background-color: white;
+            outline: 1px solid lightgrey;
+        }
+
+        .cell:hover {
+            background-color: whitesmoke;
+        }
+
+        .matrix {
+            outline: 3px solid white;
+        }
+
+    </style>
+</head>
+
+<body class="grey lighten-2">
+<!-- UNIVERSE -->
+<script type="application/javascript" src="game.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        // Materialize CSS
+        Materialize.toast("This game is developed only for machines with a keyboard (as of now)", 5000);
+        $(".button-collapse").sideNav();
+
+        // Gets references
+        var $universe = $("#universe");
+        RestartFromSeed(
+            '#universe',
+            {r: 10, c: 8},
+            [
+                {
+                    e1: {x: 0, y: 0},
+                    e2: {x: 3, y: 0},
+                    color: "rgb(0, 128, 128)"
+                },
+                {
+                    e1: {x: 0, y: 4},
+                    e2: {x: 6, y: 0},
+                    color: "rgb(128, 128, 128)"
+                }
+            ]
+        );
+    });
+
+</script>
+
+<div class="row">
+
+    <div class="card white">
+        <div class="card-content">
+            <div class="card-title">Studio</div>
+
+            <a type="button"
+               id="submit"
+               class="btn-floating btn-large teal"
+               style="position: absolute; right: 10px; top: 10px;">
+                <i class="material-icons">send</i>
+            </a>
+            <p class="range-field">
+                <input type="range" id="rows" min="1" max="30"/>
+            </p>
+            <p class="range-field">
+                <input type="range" id="cols" min="1" max="30"/>
+            </p>
+
+            <div id="flows" class="row" >
+                <div class="row">
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>x</label>
+                    </div>
+                    <div class="input-field col s3 m3 l3">
+                        <input type="number" class="validate">
+                        <label>y</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
