@@ -2,14 +2,88 @@
 
 require 'level.php';
 
+function validate_seed($seed)
+{
+    try {
+        // Matrix coordinate validation
+        $r = $seed['order']['r'];
+        $c = $seed['order']['c'];
+        $flows = $seed['flows'];
+        $colors = array($seed['color']);
+
+        // LessThanOrEqualZero
+        if ($r <= 0 or $c <= 0 or count($flows) <= 0) {
+            return [false, 'LessThanZero'];
+        }
+
+        $matrix = array(array());
+
+        for ($i = 0; $i < $c; ++$i) {
+            for ($j = 0; $j < $r; ++$j) {
+                $matrix[$i][$j] = 0;
+            }
+        }
+
+        foreach ($flows as $flow) {
+            $e1x = $flow['e1']['x'];
+            $e1y = $flow['e1']['y'];
+            $e2x = $flow['e2']['x'];
+            $e2y = $flow['e2']['y'];
+            // OutOfBounds
+            if ($c <= $e1x or $e1x < 0 or
+                $c <= $e2x or $e2x < 0 or
+                $r <= $e1y or $e1y < 0 or
+                $r <= $e2y or $e2y < 0
+            ) {
+                return [false, 'OutOfBound'];
+            }
+            // OverLaps
+            if ($matrix[$e1x][$e1y] > 0) {
+                return [false, 'Overlap'];
+            } else {
+                $matrix[$e1x][$e1y]++;
+            }
+            // OverLaps
+            if ($matrix[$e2x][$e2y] > 0) {
+                return [false, 'Overlap'];
+            } else {
+                $matrix[$e2x][$e2y]++;
+            }
+            // Color Validation
+            if (in_array($flow['color'], $colors)) {
+                return [false, 'IllegalColors'];
+            } else {
+                array_push($colors, $flow['color']);
+            }
+        }
+
+    }
+    catch (Exception $e) {
+        return [false, 'Exception'];
+    }
+
+    return json_encode($seed);
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     switch ($_POST['q']) {
         // CRUD of level object
         case 'c':
-            $new_level = new level();
-            $new_level->set($_POST['name'], $_POST['author'], $_POST['seed']);
-            $new_level->save();
+            // Validate seed
+            $jo = json_decode($_POST['level'], true);
+
+            $clean_seed = validate_seed($jo['seed']);
+            if ($clean_seed[0] == false) {
+                echo $clean_seed[1];
+            }
+            else {
+                $new_level = new level();
+                $new_level->set($jo['name'], $jo['author'], $clean_seed);
+                $new_level->save();
+                header('Location: game.php?level=' . $new_level->pk);
+                die();
+            }
             break;
         case 'r':
             $old_level = new level();

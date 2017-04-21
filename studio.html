@@ -10,152 +10,198 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
     <style>
-        .cell {
-            background-color: white;
-            outline: 1px solid lightgrey;
-        }
 
-        .cell:hover {
-            background-color: whitesmoke;
+        #flows input {
+            color: black;
+            margin: 0;
         }
-
-        .matrix {
-            outline: 3px solid white;
-        }
-
     </style>
 </head>
 
 <body class="grey lighten-2">
-<!-- UNIVERSE -->
-<script type="application/javascript" src="game.js"></script>
 
-<script type="text/javascript">
+<script type="application/javascript">
+    function _flow(e1x, e1y, e2x, e2y, color) {
+        e1x = e1x === undefined ? 0 : e1x;
+        e1y = e1y === undefined ? 0 : e1y;
+        e2x = e2x === undefined ? 1 : e2x;
+        e2y = e2y === undefined ? 1 : e2y;
+        color = color === undefined ? "#009866" : color;
 
-    $(document).ready(function () {
-        // Materialize CSS
-        Materialize.toast("This game is developed only for machines with a keyboard (as of now)", 5000);
-        $(".button-collapse").sideNav();
+        var _html =
+            '<div class="row flow"><div class="row col l4 m4 s4"><div class="input-field col l6 m6 s6"><label>x<input type="number" class=" e1x" value="' + e1x + '"></label></div><div class="input-field col l6 m6 s6"><label>y<input type="number" class=" e1y" value="' + e1y + '"></label></div></div>' +
+            '<div class="row col l4 m4 s4"><div class="input-field col l6 m6 s6"><label>x<input type="number" class=" e2x" value="' + e2x + '"></label></div><div class="input-field col l6 m6 s6"><label>y<input type="number" class=" e2y" value="' + e2y + '"></label></div></div>' +
+            '<div class="row col l4 m4 s4">' +
+            '<div class="input-field col l6 m6 s6"><input class="f_color" type="color" value="' + color + '" style="width:80px;height: 40px;border: none;"></div>' +
+            '<div class="input-field col l6 m6 s6"><a href="#" class="btn red waves-effect waves-light remove_flow"><i class="material-icons">remove</i></a></div></div></div>';
 
-        // Gets references
-        var $universe = $("#universe");
-        RestartFromSeed(
-            '#universe',
-            {r: 10, c: 8},
-            [
-                {
-                    e1: {x: 0, y: 0},
-                    e2: {x: 3, y: 0},
-                    color: "rgb(0, 128, 128)"
-                },
-                {
-                    e1: {x: 0, y: 4},
-                    e2: {x: 6, y: 0},
-                    color: "rgb(128, 128, 128)"
-                }
-            ]
-        );
-    });
+        return _html;
+    }
 
+    function hex_to_rgb(hex) {
+        var mul_map = {
+            '0': 0,
+            '1': 1,
+            '2': 2,
+            '3': 3,
+            '4': 4,
+            '5': 5,
+            '6': 6,
+            '7': 7,
+            '8': 8,
+            '9': 9,
+            'a': 10,
+            'b': 11,
+            'c': 12,
+            'd': 13,
+            'e': 14,
+            'f': 15
+        };
+        var red = mul_map[hex.charAt(1)] + mul_map[hex.charAt(2)] * 16;
+        var green = mul_map[hex.charAt(3)] + mul_map[hex.charAt(4)] * 16;
+        var blue = mul_map[hex.charAt(5)] + mul_map[hex.charAt(6)] * 16;
+
+        return 'rgb(' + red + ', ' + green + ', ' + blue + ')'
+    }
 </script>
 
 <div class="row">
+    <div class="col l6 m6 s12"></div>
+    <div class="col l6 m6 s12">
+        <div id="tools" class="card" style="padding-bottom: 40px">
+            <form action="levels.php" method="post" id="c_form">
+                <input type="text" name="q" value="c" hidden/>
+                <input id="level" type="text" name="level" hidden/>
+            </form>
+            <div class="card-content">
+                <div class="card-title">Studio</div>
+                <!--SUBMIT-->
+                <a href="#"
+                   id="submit"
+                   class="btn-floating btn-large blue waves-effect waves-light"
+                   style="position:absolute;top: 20px;right: 20px">
+                    <i class="material-icons">done</i>
+                </a>
 
-    <div class="card white">
-        <div class="card-content">
-            <div class="card-title">Studio</div>
+                <!--ADD FLOW-->
+                <a href="#"
+                   id="add_flow"
+                   class="btn-floating btn-large waves-effect waves-light"
+                   style="position:absolute;top: 20px;right: 100px">
+                    <i class="material-icons">add</i>
+                </a>
 
-            <a type="button"
-               id="submit"
-               class="btn-floating btn-large teal"
-               style="position: absolute; right: 10px; top: 10px;">
-                <i class="material-icons">send</i>
-            </a>
-            <p class="range-field">
-                <input type="range" id="rows" min="1" max="30"/>
-            </p>
-            <p class="range-field">
-                <input type="range" id="cols" min="1" max="30"/>
-            </p>
-
-            <div id="flows" class="row" >
+                <!--CITATION-->
                 <div class="row">
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
+                    <div class="input-field col l4 m4 s4">
+                        <input id="name" type="text" value="New One!" class="validate">
+                        <label for="name">name</label>
                     </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
+                    <div class="input-field col l4 m4 s4">
+                        <input id="author" type="text" value="John Doe" class="validate">
+                        <label for="author">Author</label>
                     </div>
                 </div>
+
+                <!--MATRIX-->
                 <div class="row">
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
+                    <div class="input-field col l4 m4 s4">
+                        <input id="rows" type="number" value="5" class="validate">
+                        <label for="rows">Rows</label>
                     </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
+                    <div class="input-field col l4 m4 s4">
+                        <input id="columns" type="number" value="5" class="validate">
+                        <label for="columns">Columns</label>
                     </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
+                    <div class="input-field col l4 m4 s4">
+                        <span>Color</span>
+                        <input id="m_color" type="color" value="#ffffff" style="width: 30px;height: 30px">
                     </div>
                 </div>
+
+                <!--HEADING-->
                 <div class="row">
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
+                    <div class="col l6 m6 s6">
+                        <div class="flow-text">One</div>
                     </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
+                    <div class="col l6 m6 s6">
+                        <div class="flow-text">Two</div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>x</label>
-                    </div>
-                    <div class="input-field col s3 m3 l3">
-                        <input type="number" class="validate">
-                        <label>y</label>
-                    </div>
+
+                <!--FLOWS-->
+                <script type="application/javascript">
+                    $(document).ready(function () {
+                        $('#add_flow').click(function () {
+                            $('#flows').append(_flow());
+                        });
+
+                        $('#submit').click(function () {
+                            var order = {
+                                r: $('#rows').val(),
+                                c: $('#columns').val()
+                            };
+                            var m_color = hex_to_rgb($('#m_color').val());
+
+                            var flows = [];
+
+                            $('#flows').find('.flow').each(function () {
+                                var e1 = {
+                                    x: $(this).find('.e1x').val(),
+                                    y: $(this).find('.e1y').val()
+                                };
+                                var e2 = {
+                                    x: $(this).find('.e2x').val(),
+                                    y: $(this).find('.e2y').val()
+                                };
+                                var f_color = hex_to_rgb($(this).find('.f_color').val());
+
+                                flows.push({
+                                    e1: e1,
+                                    e2: e2,
+                                    color: f_color
+                                });
+                            });
+
+                            var seed = {
+                                order: order,
+                                color: m_color,
+                                flows: flows
+                            };
+
+                            var level = {
+                                name: $('#name').val(),
+                                author: $('#author').val(),
+                                seed: seed
+                            };
+
+                            $('#level').val(JSON.stringify(level));
+
+                            $('#c_form').submit();
+                        });
+
+                        $('#flows').on(
+                            'click',
+                            '.remove_flow',
+                            function () {
+                                $(this).parent().parent().parent().remove();
+                            }
+                        );
+                    });
+                </script>
+                <div id="flows">
+
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<a href="game.php" class="btn-floating btn-large red" style="position:fixed; bottom: 20px; right: 20px;">
+    <i class="material-icons">fast_rewind</i>
+</a>
 
 </body>
 </html>

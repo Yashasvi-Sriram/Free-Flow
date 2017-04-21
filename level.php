@@ -74,9 +74,9 @@ class level
         // Touch
         if ($this->pk == 0) {
             // Determines Pk
-            $new_pk = level::$objects['meta']['new_pk'];
+            $this->pk = level::$objects['meta']['new_pk'];
             // Create
-            level::$objects[$new_pk] = array(
+            level::$objects[$this->pk] = array(
                 'name' => $this->name,
                 'author' => $this->author,
                 'seed' => $this->seed,
