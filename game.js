@@ -28,12 +28,25 @@ function _element(tags, attributes, contents, closings) {
     return $element;
 }
 
-const MATRIX_BG_COLOR = "rgb(255, 255, 255)";
-
 /**
  * Matrix Constructor
+ *
+ * Assert:
+ * ======
+ * All distinct colors (including base color and flow colors)
+ * All end points of all flows are distinct (in terms of coordinates)
+ * All flow endpoints have coordinates on the matrix
+ * No elements with id matrix
+ * No elements with ids in format x-y-cell
+ * All params are in the specified format
+ *
+ * Format
+ * ======
+ * order.r = rows, order.c = columns
+ * color = rgb(r<space>,g<space>,b) (for any color, base color and flow color)
+ *
  * */
-function Matrix(order, pos_px, cell_size_px, container, color) {
+function Matrix(container, order, color) {
     var m_self = this;
 
     const MATRIX_UNIQUE_ID = "matrix";
@@ -51,7 +64,7 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
     /**
      * Cell Constructor
      * */
-    m_self.Cell = function (index_i, index_j, left_px, top_px, size_px, container) {
+    m_self.Cell = function (index_i, index_j, left_px, top_px, size_px) {
         var parent_matrix = m_self;
         var self = this;
 
@@ -78,9 +91,9 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
             [""],
             [true]
         );
-        $(container).append(_cell);
+        $(parent_matrix.$obj).append(_cell);
         // Keeps track of it
-        self.$obj = $(container).find('#' + self.id);
+        self.$obj = $(parent_matrix.$obj).find('#' + self.id);
 
         /* Graphics -------------------------------------- */
         self.set_bg = function (_color) {
@@ -364,7 +377,6 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
         });
     };
 
-
     // Unique Id
     m_self.id = MATRIX_UNIQUE_ID;
     m_self.order = order;
@@ -377,11 +389,17 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
     // Color
     m_self.color = color;
 
+    // Default Configuration
+    var width_container = $(container).width();
+    var height_container = $(container).height();
+    var center_px = {x: width_container / 2, y: height_container / 2};
+    var cell_size_px = (Math.min(width_container, height_container) / Math.max(order.r, order.c)) * (9 / 10); // min padding
+
     // Geometry math
     var width_px = m_self.order.c * cell_size_px; // no of columns
     var height_px = m_self.order.r * cell_size_px; // no of rows
-    var left_px = pos_px.x - width_px / 2;
-    var top_px = pos_px.y - height_px / 2;
+    var left_px = center_px.x - width_px / 2;
+    var top_px = center_px.y - height_px / 2;
 
     // The container must have position = relative
     $(container).css({
@@ -405,6 +423,9 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
         [""],
         [true]
     );
+    // Empties container
+    $(container).empty();
+    // Appends Matrix
     $(container).append(_matrix);
     // Keeps track of it
     m_self.$obj = $(container).find("#" + m_self.id);
@@ -425,7 +446,7 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
         var new_row = [];
         for (var j = 0; j < m_self.order.r; j++) {
             // Push to array
-            new_row.push(new m_self.Cell(i, j, top_px_ij, left_px_ij, cell_size_px, m_self.$obj));
+            new_row.push(new m_self.Cell(i, j, top_px_ij, left_px_ij, cell_size_px));
             left_px_ij += cell_size_px;
         }
         m_self.cells.push(new_row);
@@ -584,26 +605,9 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
 
 }
 
-/**
- * Assert
- * Unique white color,
- * unique colors for all flows in rgba format,
- * distinct end points of flow,
- * proper values of order,
- * proper flow end points
- *
- * order.r = rows, order.c = columns
- * */
 function StartFromParams(container, order, color, flows) {
-    // Empties container
-    $(container).empty();
-    // Calc some globals
-    var width_container = $(container).width();
-    var height_container = $(container).height();
-    var pos = {x: width_container / 2, y: height_container / 2};
-    var cell_size = (Math.min(width_container, height_container) / Math.max(order.r, order.c)) * (9 / 10); // min padding
 
-    var matrix = new Matrix(order, pos, cell_size, container, color);
+    var matrix = new Matrix(container, order, color);
 
     for (var i = 0; i < flows.length; i++) {
         var flow = flows[i];
