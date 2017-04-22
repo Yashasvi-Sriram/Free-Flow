@@ -52,6 +52,7 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
      * Cell Constructor
      * */
     m_self.Cell = function (index_i, index_j, left_px, top_px, size_px, container) {
+        var parent_matrix = m_self;
         var self = this;
 
         // Basic Info
@@ -70,7 +71,8 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
                     "height:" + size_px + "px;" +
                     "position:absolute;" +
                     "left:" + left_px + "px;" +
-                    "top:" + top_px + "px;"
+                    "top:" + top_px + "px;" +
+                    "background-color:" + parent_matrix.color + ";"
                 }
             ],
             [""],
@@ -104,7 +106,7 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
 
         self.un_mark_cell = function () {
             self.$obj.css({
-                'background-color': MATRIX_BG_COLOR
+                'background-color': parent_matrix.color
             });
         };
     };
@@ -198,7 +200,7 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
 
             // If new coordinates does not have a colored cell already
             // Put a new cell there
-            if (new_cell_bg === MATRIX_BG_COLOR) {
+            if (new_cell_bg === parent_matrix.color) {
                 // Graphic changes
                 new_cell.mark_cell(self.color);
                 // Adds new cell coordinates in the path
@@ -397,8 +399,7 @@ function Matrix(order, pos_px, cell_size_px, container, color) {
                 "height:" + height_px + "px;" +
                 "position:absolute;" +
                 "left:" + left_px + "px;" +
-                "top:" + top_px + "px;" +
-                "background-color:" + m_self.color + ";"
+                "top:" + top_px + "px;"
             }
         ],
         [""],
