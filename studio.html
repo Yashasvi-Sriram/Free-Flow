@@ -34,8 +34,8 @@
             '<div class="row flow"><div class="row col l4 m4 s4"><div class="input-field col l6 m6 s6"><label>x<input type="number" class=" e1x" value="' + e1x + '"></label></div><div class="input-field col l6 m6 s6"><label>y<input type="number" class=" e1y" value="' + e1y + '"></label></div></div>' +
             '<div class="row col l4 m4 s4"><div class="input-field col l6 m6 s6"><label>x<input type="number" class=" e2x" value="' + e2x + '"></label></div><div class="input-field col l6 m6 s6"><label>y<input type="number" class=" e2y" value="' + e2y + '"></label></div></div>' +
             '<div class="row col l4 m4 s4">' +
-            '<div class="input-field col l6 m6 s6"><input class="f_color" type="color" value="' + color + '" style="width:80px;height: 40px;border: none;"></div>' +
-            '<div class="input-field col l6 m6 s6"><a href="#" class="btn red waves-effect waves-light remove_flow"><i class="material-icons">remove</i></a></div></div></div>';
+            '<div class="input-field row"><input class="jscolor f_color" type="color" value="' + color + '" style="width:80px;height: 40px;"></div>' +
+            '<div class="input-field row"><a href="#" class="btn red waves-effect waves-light remove_flow"><i class="material-icons">remove</i></a></div></div></div>';
 
         return _html;
     }
@@ -63,14 +63,19 @@
         var green = mul_map[hex.charAt(3)] + mul_map[hex.charAt(4)] * 16;
         var blue = mul_map[hex.charAt(5)] + mul_map[hex.charAt(6)] * 16;
 
-        return 'rgb(' + red + ', ' + green + ', ' + blue + ')'
+        if (isNaN(red) || isNaN(green) || isNaN(blue)) {
+            return false;
+        }
+        else {
+            return 'rgb(' + red + ', ' + green + ', ' + blue + ')'
+        }
     }
 </script>
 
 <div class="row">
-    <div class="col l6 m6 s12"></div>
-    <div class="col l6 m6 s12">
-        <div id="tools" class="card" style="padding-bottom: 40px">
+    <div class="col l6 m12 s12"></div>
+    <div class="col l6 m12 s12">
+        <div id="tools" class="card">
             <form action="levels.php" method="post" id="c_form">
                 <input type="text" name="q" value="c" hidden/>
                 <input id="level" type="text" name="level" hidden/>
@@ -116,18 +121,20 @@
                         <label for="columns">Columns</label>
                     </div>
                     <div class="input-field col l4 m4 s4">
-                        <span>Color</span>
-                        <input id="m_color" type="color" value="#ffffff" style="width: 30px;height: 30px">
+                        <input id="m_color" type="color" value="#ffffff" style="width: 80px;height: 40px">
                     </div>
                 </div>
 
                 <!--HEADING-->
                 <div class="row">
-                    <div class="col l6 m6 s6">
+                    <div class="col l4 m4 s4">
                         <div class="flow-text">One</div>
                     </div>
-                    <div class="col l6 m6 s6">
+                    <div class="col l4 m4 s4">
                         <div class="flow-text">Two</div>
+                    </div>
+                    <div class="col l4 m4 s4">
+                        <div class="flow-text">Color</div>
                     </div>
                 </div>
 
@@ -144,7 +151,10 @@
                                 c: $('#columns').val()
                             };
                             var m_color = hex_to_rgb($('#m_color').val());
-
+                            if (m_color === false){
+                                Materialize.toast('Illegal Colors', 2000);
+                                return;
+                            }
                             var flows = [];
 
                             $('#flows').find('.flow').each(function () {
@@ -157,6 +167,10 @@
                                     y: $(this).find('.e2y').val()
                                 };
                                 var f_color = hex_to_rgb($(this).find('.f_color').val());
+                                if (f_color === false) {
+                                    Materialize.toast('Illegal Colors', 2000);
+                                    return;
+                                }
 
                                 flows.push({
                                     e1: e1,

@@ -117,7 +117,6 @@ require 'level.php';
             echo '$(\'.button-collapse\').sideNav(\'show\');';
         }
         ?>
-
     });
 
 </script>
@@ -141,6 +140,21 @@ require 'level.php';
 <!-- UNIVERSE -->
 <div id="universe" class="grey lighten-2" style="width: 100vw;height: 100vh;"></div>
 
+<!--ON SCREEN KEYS-->
+<!--<div style="position:fixed;top: 20px;left: 20px;">-->
+<!--    <a href="#"-->
+<!--       class="btn-floating btn-large waves-effect waves-light black"-->
+<!--       style="position:absolute;top: 0;left: 60px;"><i class="material-icons">keyboard_arrow_up</i></a>-->
+<!--    <a href="#"-->
+<!--       class="btn-floating btn-large waves-effect waves-light black"-->
+<!--       style="position:absolute;top: 120px;left: 60px;"><i class="material-icons">keyboard_arrow_down</i></a>-->
+<!--    <a href="#"-->
+<!--       class="btn-floating btn-large waves-effect waves-light black"-->
+<!--       style="position:absolute;top: 60px;left: 0;"><i class="material-icons">keyboard_arrow_left</i></a>-->
+<!--    <a href="#"-->
+<!--       class="btn-floating btn-large waves-effect waves-light black"-->
+<!--       style="position:absolute;top: 60px;left: 120px;"><i class="material-icons">keyboard_arrow_right</i></a>-->
+<!--</div>-->
 
 <!--HELP-->
 <a class="modal-trigger waves-effect waves-light btn-floating btn-large"
