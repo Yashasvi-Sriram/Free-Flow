@@ -14,16 +14,6 @@ require 'level.php';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
-    <style>
-        .cell {
-            background-color: white;
-            outline: 1px solid lightgrey;
-        }
-
-        .matrix {
-            outline: 3px solid white;
-        }
-    </style>
 </head>
 
 <body>
@@ -155,6 +145,18 @@ require 'level.php';
 <!--       class="btn-floating btn-large waves-effect waves-light black"-->
 <!--       style="position:absolute;top: 60px;left: 120px;"><i class="material-icons">keyboard_arrow_right</i></a>-->
 <!--</div>-->
+
+<!--REFRESH-->
+<a class="modal-trigger waves-effect waves-light btn-floating purple btn-large"
+    <?php
+    if (isset($_GET['level']))
+        echo 'href="game.php?level=' . $_GET['level'] . '"' . 'style="position:fixed;bottom: 100px;right: 20px;"';
+    else
+        echo 'href="#" style="position:fixed;bottom: 100px;right: 20px;display:none;"';
+    ?>
+    >
+    <i class="material-icons">replay</i>
+</a>
 
 <!--HELP-->
 <a class="modal-trigger waves-effect waves-light btn-floating btn-large"

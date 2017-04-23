@@ -37,6 +37,11 @@ function _element(tags, attributes, contents, closings) {
  * All end points of all flows are distinct (in terms of coordinates)
  * All flow endpoints have coordinates on the matrix
  * No elements with id matrix
+ * No elements with id score_board
+ * No elements with id completed_flows
+ * No elements with id total_flows
+ * No elements with id total_cells_built
+ * No elements with id time_from_start
  * No elements with ids in format x-y-cell
  * All params are in the specified format
  *
@@ -51,6 +56,12 @@ function Matrix(container, order, color) {
 
     const MATRIX_UNIQUE_ID = "matrix";
     const CELL_ID_SUFFIX = "cell";
+
+    const SCORE_BOARD_ID = "score_board";
+    const COMPLETED_FLOWS_ID = "completed_flows";
+    const TOTAL_FLOWS_ID = "total_flows";
+    const TOTAL_CELLS_BUILT_ID = "total_cells_built";
+    const TIME_FROM_START_ID = "time_from_start";
 
     function prepare_new_id(coordinates) {
         /*
@@ -113,13 +124,15 @@ function Matrix(container, order, color) {
         // the mark and un mark methods should be exact opposites of each other
         self.mark_cell = function (_color) {
             self.$obj.css({
-                'background-color': _color
+                'background-color': _color,
+                'border': '10px solid ' + parent_matrix.color
             });
         };
 
         self.un_mark_cell = function () {
             self.$obj.css({
-                'background-color': parent_matrix.color
+                'background-color': parent_matrix.color,
+                'border': 'none'
             });
         };
     };
@@ -188,6 +201,14 @@ function Matrix(container, order, color) {
             parent_matrix.check_game_status();
         };
 
+        self.on_steps_increment_callback = function () {
+            parent_matrix.total_cells_built_view.html(Number(parent_matrix.total_cells_built_view.html()) + 1);
+        };
+
+        self.on_steps_decrement_callback = function () {
+            parent_matrix.total_cells_built_view.html(Number(parent_matrix.total_cells_built_view.html()) - 1);
+        };
+
         self.reset_flow = function () {
             // Undo all the graphic changes
             var path_len = self.path.length;
@@ -220,6 +241,8 @@ function Matrix(container, order, color) {
                 self.path.push(new_cell.co_ordiantes);
                 // Increment Steps
                 self.steps++;
+                // Steps Increment Callback
+                self.on_steps_increment_callback();
             }
             // Reached it's destination
             else if ((new_cell.co_ordiantes.x === self.end.x && new_cell.co_ordiantes.y === self.end.y)) {
@@ -240,6 +263,8 @@ function Matrix(container, order, color) {
                 self.path.pop();
                 // Decrement Steps
                 self.steps--;
+                // Steps Decrement Callback
+                self.on_steps_decrement_callback();
             }
         };
 
@@ -266,7 +291,7 @@ function Matrix(container, order, color) {
 
         self.left = function () {
             if (self.path.length === 0) {
-                alert("Select a flow to build");
+                Materialize.toast(m_self.toasts.arrow_key_press, 1000);
             }
             else {
                 // length > 0
@@ -288,7 +313,7 @@ function Matrix(container, order, color) {
 
         self.right = function () {
             if (self.path.length === 0) {
-                alert("Select a flow to build");
+                Materialize.toast(m_self.toasts.arrow_key_press, 1000);
             }
             else {
                 // length > 0
@@ -310,7 +335,7 @@ function Matrix(container, order, color) {
 
         self.up = function () {
             if (self.path.length === 0) {
-                alert("Select a flow to build");
+                Materialize.toast(m_self.toasts.arrow_key_press, 1000);
             }
             else {
                 // length > 0
@@ -332,7 +357,7 @@ function Matrix(container, order, color) {
 
         self.down = function () {
             if (self.path.length === 0) {
-                alert("Select a flow to build");
+                Materialize.toast(m_self.toasts.arrow_key_press, 1000);
             }
             else {
                 // length > 0
@@ -354,7 +379,7 @@ function Matrix(container, order, color) {
 
         /* Listeners -------------------------------------------*/
         $(document).ready(function () {
-            $(container)
+            $(parent_matrix.$obj)
                 .on(
                     'click',
                     '#' + self.end_point1.id +
@@ -500,6 +525,7 @@ function Matrix(container, order, color) {
     m_self.add_flow = function (pos1, pos2, color) {
         m_self.flows.push(new m_self.Flow(pos1, pos2, color, m_self.flows.length));
         m_self.completed_flows.push(false);
+        m_self.total_flows_view.html(Number(m_self.total_flows_view.html()) + 1);
     };
 
     /* Listeners ------------------------------------------------------------------------- */
@@ -512,7 +538,7 @@ function Matrix(container, order, color) {
                 // Left arrow
                 case 37:
                     if (m_self.active_flow_index === -1) {
-                        alert("Select a flow to build");
+                        Materialize.toast(m_self.toasts.arrow_key_press, 1000);
                         return;
                     }
                     else {
@@ -522,7 +548,7 @@ function Matrix(container, order, color) {
                 // Up arrow
                 case 38:
                     if (m_self.active_flow_index === -1) {
-                        alert("Select a flow to build");
+                        Materialize.toast(m_self.toasts.arrow_key_press, 1000);
                         return;
                     }
                     else {
@@ -532,7 +558,7 @@ function Matrix(container, order, color) {
                 // Right arrow
                 case 39:
                     if (m_self.active_flow_index === -1) {
-                        alert("Select a flow to build");
+                        Materialize.toast(m_self.toasts.arrow_key_press, 1000);
                         return;
                     }
                     else {
@@ -542,7 +568,7 @@ function Matrix(container, order, color) {
                 // Down arrow
                 case 40:
                     if (m_self.active_flow_index === -1) {
-                        alert("Select a flow to build");
+                        Materialize.toast(m_self.toasts.arrow_key_press, 1000);
                         return;
                     }
                     else {
@@ -555,19 +581,78 @@ function Matrix(container, order, color) {
         }
     );
 
+    /* Score Board -------------------------------------------------------------------------- */
+
+    // Append score board
+    var _score_board =
+        '<div id="score_board" class="flow-text" style="position:absolute;top: 0;right: 0;padding: 10px">' +
+        '<div>' +
+        '<span>Flows: </span>' +
+        '<span id="completed_flows"></span>' +
+        '<span>/</span>' +
+        '<span id="total_flows"></span>' +
+        '</div>' +
+        '<div>' +
+        '<span>Cells: </span>' +
+        '<span id="total_cells_built"></span>' +
+        '</div>' +
+        '<div>' +
+        '<span>Time: </span>' +
+        '<span id="time_from_start"></span>' +
+        '<span>s</span>' +
+        '</div>' +
+        '</div>';
+
+    $(container).append(_score_board);
+
+    // Gets references to views
+    m_self.score_board_view = $('#' + SCORE_BOARD_ID);
+    m_self.completed_flows_view = $(m_self.score_board_view).find('#' + COMPLETED_FLOWS_ID);
+    m_self.total_flows_view = $(m_self.score_board_view).find('#' + TOTAL_FLOWS_ID);
+    m_self.total_cells_built_view = $(m_self.score_board_view).find('#' + TOTAL_CELLS_BUILT_ID);
+    m_self.time_from_start_view = $(m_self.score_board_view).find('#' + TIME_FROM_START_ID);
+
+    // Initialize views
+    $(m_self.completed_flows_view).html("0");
+    $(m_self.total_flows_view).html("0");
+    $(m_self.total_cells_built_view).html("0");
+    $(m_self.time_from_start_view).html("0");
+    // Update timer every one second
+    m_self.update_timer = function () {
+        $(m_self.time_from_start_view).html(Number($(m_self.time_from_start_view).html()) + 1);
+    };
+    setInterval(function () {
+        m_self.update_timer();
+    }, 1000);
+
     /* Game  -------------------------------------------------------------------------------- */
 
+    m_self.toasts = {
+        arrow_key_press: "Select a flow to build"
+    };
+
     m_self.check_game_status = function () {
-        var game_finished = true;
+        var no_incomplete = 0;
+        var no_complete;
+
         for (var i = 0; i < m_self.flows.length; ++i) {
-            if (m_self.completed_flows[i] !== true) {
-                game_finished = false;
-                break;
+            if (m_self.completed_flows[i] === false) {
+                no_incomplete++;
             }
         }
+        no_complete = m_self.flows.length - no_incomplete;
 
-        if (game_finished === true) {
+        // Update completed_flows_view
+        m_self.completed_flows_view.html(no_complete);
+
+        // Finish Game
+        if (no_incomplete === 0) {
+            // Indicate Game over
             Materialize.toast("Game over", 3000);
+            // Change arrow_key_press toast
+            m_self.toasts.arrow_key_press = "Game Over";
+            // Stop timer
+            m_self.update_timer = function () {};
         }
     };
 
