@@ -23,6 +23,7 @@
 <body class="grey lighten-2">
 
 <script type="application/javascript">
+
     function _flow(e1x, e1y, e2x, e2y, color) {
         e1x = e1x === undefined ? 0 : e1x;
         e1y = e1y === undefined ? 0 : e1y;
@@ -70,6 +71,55 @@
             return 'rgb(' + red + ', ' + green + ', ' + blue + ')'
         }
     }
+
+    // Assert format rgb(r, g, b)
+    function rgb_to_hex(rgb) {
+        var values = rgb.split(", ");
+        var red = Number(values[0].substring(4, values[0].length));
+        var green = Number(values[1]);
+        var blue = Number(values[2].substring(0, values[2].length - 1));
+
+        if (red < 10) {
+            red = '0' + red.toString(16);
+        } else {
+            red = red.toString(16);
+        }
+
+        if (green < 10) {
+            green = '0' + green.toString(16);
+        } else {
+            green = green.toString(16);
+        }
+
+        if (blue < 10) {
+            blue = '0' + blue.toString(16);
+        } else {
+            blue = blue.toString(16);
+        }
+
+        return '#' + red + green + blue;
+    }
+
+    function apply_context(context) {
+        $('#name').val(context.name);
+        $('#author').val(context.author);
+        $('#m_color').val(rgb_to_hex(context.seed.color));
+        $('#rows').val(context.seed.order.r);
+        $('#columns').val(context.seed.order.c);
+
+        $('#no_flows').html(context.seed.flows.length);
+        for (var i = 0; i < context.seed.flows.length; i++) {
+            var ith = context.seed.flows[i];
+            $('#flows').append(_flow(
+                ith.e1.x,
+                ith.e1.y,
+                ith.e2.x,
+                ith.e2.y,
+                rgb_to_hex(ith.color)
+            ));
+        }
+    }
+
 </script>
 
 <div class="row">
@@ -127,23 +177,38 @@
 
                 <!--HEADING-->
                 <div class="row">
-                    <div class="col l4 m4 s4">
+                    <div class="col l3 m3 s3">
                         <div class="flow-text">One</div>
                     </div>
-                    <div class="col l4 m4 s4">
+                    <div class="col l3 m3 s3">
                         <div class="flow-text">Two</div>
                     </div>
-                    <div class="col l4 m4 s4">
+                    <div class="col l3 m3 s3">
                         <div class="flow-text">Color</div>
+                    </div>
+                    <div class="col l3 m3 s3">
+                        <div id="no_flows" class="flow-text">0</div>
                     </div>
                 </div>
 
                 <!--FLOWS-->
                 <script type="application/javascript">
                     $(document).ready(function () {
+                        $('#no_flows').html(0);
+
                         $('#add_flow').click(function () {
                             $('#flows').append(_flow());
+                            $('#no_flows').html(Number($('#no_flows').html()) + 1);
                         });
+
+                        $('#flows').on(
+                            'click',
+                            '.remove_flow',
+                            function () {
+                                $(this).parent().parent().parent().remove();
+                                $('#no_flows').html(Number($('#no_flows').html()) - 1);
+                            }
+                        );
 
                         $('#submit').click(function () {
                             var order = {
@@ -151,7 +216,7 @@
                                 c: $('#columns').val()
                             };
                             var m_color = hex_to_rgb($('#m_color').val());
-                            if (m_color === false){
+                            if (m_color === false) {
                                 Materialize.toast('Illegal Colors', 2000);
                                 return;
                             }
@@ -178,6 +243,10 @@
                                     color: f_color
                                 });
                             });
+                            if (flows.length > 10) {
+                                Materialize.toast("Too many flows!", 5000);
+                                return;
+                            }
 
                             var seed = {
                                 order: order,
@@ -196,13 +265,14 @@
                             $('#c_form').submit();
                         });
 
-                        $('#flows').on(
-                            'click',
-                            '.remove_flow',
-                            function () {
-                                $(this).parent().parent().parent().remove();
-                            }
-                        );
+                        <?php
+                        if (isset($_GET['error_msg'])) {
+                            echo 'Materialize.toast("Error occurred", 5000);';
+                            echo 'Materialize.toast(' . $_GET["error_msg"] . ', 5000);';
+                            echo 'var context = JSON.parse(' . $_GET["context"] . ');';
+                            echo 'apply_context(context);';
+                        }
+                        ?>
                     });
                 </script>
                 <div id="flows">

@@ -12,8 +12,11 @@ function validate_seed($seed)
         $colors = array($seed['color']);
 
         // LessThanOrEqualZero
-        if ($r <= 0 or $c <= 0 or count($flows) <= 0) {
-            return [false, 'LessThanZero'];
+        if ($r <= 0 or $c <= 0 ) {
+            return [false, 'Really! An empty matrix?'];
+        }
+        if (count($flows) <= 0) {
+            return [false, 'At least one flow is required'];
         }
 
         $matrix = array(array());
@@ -35,23 +38,23 @@ function validate_seed($seed)
                 $r <= $e1y or $e1y < 0 or
                 $r <= $e2y or $e2y < 0
             ) {
-                return [false, 'OutOfBound'];
+                return [false, 'Out of bound Points'];
             }
             // OverLaps
             if ($matrix[$e1x][$e1y] > 0) {
-                return [false, 'Overlap'];
+                return [false, 'Overlap of endpoints of flows'];
             } else {
                 $matrix[$e1x][$e1y]++;
             }
             // OverLaps
             if ($matrix[$e2x][$e2y] > 0) {
-                return [false, 'Overlap'];
+                return [false, 'Overlap of endpoints of flows'];
             } else {
                 $matrix[$e2x][$e2y]++;
             }
             // Color Validation
             if (in_array($flow['color'], $colors)) {
-                return [false, 'IllegalColors'];
+                return [false, 'Illegal colors'];
             } else {
                 array_push($colors, $flow['color']);
             }
@@ -59,7 +62,7 @@ function validate_seed($seed)
 
     }
     catch (Exception $e) {
-        return [false, 'Exception'];
+        return [false, 'Some error occurred'];
     }
 
     return json_encode($seed);
@@ -75,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $clean_seed = validate_seed($jo['seed']);
             if ($clean_seed[0] == false) {
-                echo $clean_seed[1];
+                header('Location: studio.php?error_msg="'.$clean_seed[1].'"&context="'.addslashes($_POST['level']).'"');
             }
             else {
                 $new_level = new level();

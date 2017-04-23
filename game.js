@@ -117,7 +117,7 @@ function Matrix(container, order, color) {
             // Cannot change bg color
             self.$obj.css({
                 'background-color': _color,
-                'border': '10px dashed white'
+                'border': '10px dashed ' + parent_matrix.color
             });
         };
 
@@ -442,7 +442,8 @@ function Matrix(container, order, color) {
                 "height:" + height_px + "px;" +
                 "position:absolute;" +
                 "left:" + left_px + "px;" +
-                "top:" + top_px + "px;"
+                "top:" + top_px + "px;" + 
+                "outline:" + "1px solid white;" 
             }
         ],
         [""],

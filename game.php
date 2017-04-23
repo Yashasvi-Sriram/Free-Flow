@@ -114,7 +114,7 @@ require 'level.php';
 <!-- NAV BAR -->
 <ul id="level-bar" class="side-nav" style="overflow-y: auto">
     <li><a href="#" class="waves-effect waves-yellow"><i class="material-icons">store</i>Levels</a></li>
-    <li><a href="studio.html" class="waves-effect waves-yellow"><i class="material-icons">add</i>Create</a></li>
+    <li><a href="studio.php" class="waves-effect waves-yellow"><i class="material-icons">add</i>Create</a></li>
     <li class="divider" style="margin: 0;"></li>
     <div id="level_list"></div>
 </ul>
