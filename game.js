@@ -107,12 +107,6 @@ function Matrix(container, order, color) {
         self.$obj = $(parent_matrix.$obj).find('#' + self.id);
 
         /* Graphics -------------------------------------- */
-        self.set_bg = function (_color) {
-            self.$obj.css({
-                'background-color': _color
-            });
-        };
-
         self.mark_flow_end_point = function (_color) {
             // Cannot change bg color
             self.$obj.css({
@@ -135,6 +129,27 @@ function Matrix(container, order, color) {
                 'border': 'none'
             });
         };
+
+        // cell's graphic state at the start and end of the method are same
+        self.bounce_effect = function () {
+            $(self.$obj).animate(
+                {
+                    opacity: '0.5',
+                    height: '+=20px',
+                    width: '+=20px'
+                },
+                100,
+                function () {
+                    $(self.$obj).animate(
+                        {
+                            opacity: '1',
+                            height: '-=20px',
+                            width: '-=20px'
+                        },
+                        100);
+                }
+            );
+        }
     };
 
     /**
@@ -176,25 +191,30 @@ function Matrix(container, order, color) {
         self.initialize_flow = function (start) {
             // Pushes the selected point's coordinates into the path
             // Notice that we are not changing the end point graphically
-            self.path.push(start);
+            self.path.push(start.co_ordiantes);
             self.start = start;
 
-            if (self.start.x === self.end_point1.co_ordiantes.x &&
-                self.start.y === self.end_point1.co_ordiantes.y)
-                self.end = {
-                    x: self.end_point2.co_ordiantes.x,
-                    y: self.end_point2.co_ordiantes.y
-                };
-            else if (self.start.x === self.end_point2.co_ordiantes.x &&
-                self.start.y === self.end_point2.co_ordiantes.y)
-                self.end = {
-                    x: self.end_point1.co_ordiantes.x,
-                    y: self.end_point1.co_ordiantes.y
-                };
+            // start is endpoint 1
+            if (self.start.co_ordiantes.x === self.end_point1.co_ordiantes.x && self.start.co_ordiantes.y === self.end_point1.co_ordiantes.y) {
+                // end is endpoint2
+                self.end = self.end_point2;
+            }
+            // start is endpoint 2
+            else if (self.start.co_ordiantes.x === self.end_point2.co_ordiantes.x && self.start.co_ordiantes.y === self.end_point2.co_ordiantes.y) {
+                // end is endpoint1
+                self.end = self.end_point1;
+            }
 
+            self.start.bounce_effect();
         };
 
         self.on_complete_callback = function () {
+            // This flow is completed
+            parent_matrix.completed_flows[self.index] = true;
+            // This flow becomes inactive
+            parent_matrix.active_flow_index = -1;
+            // Flow end indication
+            self.end.bounce_effect();
             // Update globals like score etc ...
             Materialize.toast("Flow completed", 2000);
             // Check for game completion
@@ -245,11 +265,10 @@ function Matrix(container, order, color) {
                 self.on_steps_increment_callback();
             }
             // Reached it's destination
-            else if ((new_cell.co_ordiantes.x === self.end.x && new_cell.co_ordiantes.y === self.end.y)) {
-                // This flow is completed
-                parent_matrix.completed_flows[self.index] = true;
-                // This flow becomes inactive
-                parent_matrix.active_flow_index = -1;
+            else if ((new_cell.co_ordiantes.x === self.end.co_ordiantes.x && new_cell.co_ordiantes.y === self.end.co_ordiantes.y)) {
+                // Adds new cell coordinates in the path
+                self.path.push(new_cell.co_ordiantes);
+                // Call back for flow completion
                 self.on_complete_callback();
             }
         };
@@ -394,8 +413,8 @@ function Matrix(container, order, color) {
                         if (parent_matrix.completed_flows[self.index] === false) {
                             // Update the active flow index
                             parent_matrix.active_flow_index = self.index;
-                            var start = parent_matrix.get_coordinates($(this).attr('id'));
-                            self.initialize_flow(start);
+                            var start_co_ordinates = parent_matrix.get_coordinates($(this).attr('id'));
+                            self.initialize_flow(parent_matrix.get_cell(start_co_ordinates));
                         }
                     }
                 )
@@ -442,8 +461,8 @@ function Matrix(container, order, color) {
                 "height:" + height_px + "px;" +
                 "position:absolute;" +
                 "left:" + left_px + "px;" +
-                "top:" + top_px + "px;" + 
-                "outline:" + "1px solid white;" 
+                "top:" + top_px + "px;" +
+                "outline:" + "1px solid white;"
             }
         ],
         [""],
@@ -684,10 +703,6 @@ function Matrix(container, order, color) {
 
         return JSON.stringify(seed);
     };
-
-    m_self.destroy = function () {
-        m_self.$obj.remove();
-    }
 
 }
 
