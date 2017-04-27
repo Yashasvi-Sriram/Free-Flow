@@ -172,6 +172,7 @@ require 'level.php';
         <p>Click on any colored cells, and build it using arrow keys</p>
         <p>A completed path is called a Flow</p>
         <p>No two flows can intersect</p>
+        <p>Color all cells on the board</p>
         <p>That's it!!</p>
         <p>Complete all the levels</p>
         <p>Create your own levels using Flow Studio</p>

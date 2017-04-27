@@ -651,12 +651,30 @@ function Matrix(container, order, color) {
         arrow_key_press: "Select a flow to build"
     };
 
+    m_self.on_level_failed = function () {
+        // Indicate Game over
+        Materialize.toast("Game over", 3000);
+        // Change arrow_key_press toast
+        m_self.toasts.arrow_key_press = "Game over";
+        // Stop timer
+        m_self.update_timer = function () {};
+    };
+
+    m_self.on_level_complete = function () {
+        // Indicate Game over
+        Materialize.toast("Level Complete", 3000);
+        // Change arrow_key_press toast
+        m_self.toasts.arrow_key_press = "Level Complete";
+        // Stop timer
+        m_self.update_timer = function () {};
+    };
+
     m_self.check_game_status = function () {
         var no_incomplete = 0;
         var no_complete;
 
-        for (var i = 0; i < m_self.flows.length; ++i) {
-            if (m_self.completed_flows[i] === false) {
+        for (var k = 0; k < m_self.flows.length; ++k) {
+            if (m_self.completed_flows[k] === false) {
                 no_incomplete++;
             }
         }
@@ -667,12 +685,19 @@ function Matrix(container, order, color) {
 
         // Finish Game
         if (no_incomplete === 0) {
-            // Indicate Game over
-            Materialize.toast("Game over", 3000);
-            // Change arrow_key_press toast
-            m_self.toasts.arrow_key_press = "Game Over";
-            // Stop timer
-            m_self.update_timer = function () {};
+            // Checking for level failed
+            for (var i = 0; i < m_self.cells.length; i++) {
+                var ith_col = m_self.cells[i];
+                for (var j = 0; j < ith_col.length; j++) {
+                    var i_j_cell = ith_col[j];
+                    if (i_j_cell.$obj.css('background-color') === m_self.color) {
+                        m_self.on_level_failed();
+                        return;
+                    }
+                }
+            }
+            // If all cells are colored then level complete
+            m_self.on_level_complete();
         }
     };
 
