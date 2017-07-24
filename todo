@@ -1,0 +1,13 @@
+1. handle json db connection failures
+
+1. time_stamp
+	...change time_stamp on save() not set()
+	...parse time_stamp in get()
+
+2. border
+	...put two borders of different colors to indicate the border of matrix
+		so that no matter what color is used for base and flows, the border is clearly visible
+
+3. throw exception when get($pk) is called with invalid pk
+
+4. validate pk of objects when save(), delete() are called

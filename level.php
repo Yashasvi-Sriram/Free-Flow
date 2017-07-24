@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * Assert for any instance created
+ *      if it is changed, either save() or delete() is called on it
+ */
 class level
 {
     // Json db
